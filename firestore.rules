@@ -1,0 +1,28 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Users can read their own data and update their own progress and favorites.
+    match /users/{userId} {
+      allow read, update: if request.auth != null && request.auth.uid == userId;
+      allow create: if request.auth != null;
+    }
+
+    // Authenticated users can read content.
+    match /contents/{contentId} {
+      allow read: if request.auth != null;
+      // Write access is restricted to admins.
+      allow write: if request.auth.token.admin == true;
+    }
+
+    // Users can create and read their own quiz results.
+    match /simulados/{simulacaoId} {
+      allow read, create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+    }
+
+    // Default deny all other access.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
